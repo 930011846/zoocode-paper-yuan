@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论文格式确认 - 论文格式自动排版</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
+</head>
+<body>
+
+<!-- ============================================================
+     顶部导航栏
+     ============================================================ -->
+<nav class="navbar">
+    <span class="navbar-title">📋 论文格式确认</span>
+</nav>
+
+<!-- ============================================================
+     主容器
+     ============================================================ -->
+<div class="main-container">
+
+    <!-- ===== 左侧：目录侧边栏 280px ===== -->
+    <aside class="sidebar" id="sidebar">
+        <!-- 由 JS 动态渲染 buildTOC() -->
+    </aside>
+
+    <!-- ===== 右侧：文档预览面板 ===== -->
+    <main class="preview-panel" id="previewPanel">
+        <!-- 由 JS 动态渲染 renderDocument() -->
+    </main>
+
+</div>
+
+<!-- ============================================================
+     底部固定操作栏 60px
+     ============================================================ -->
+<div class="bottom-bar">
+    <span class="bottom-status" id="bottomStatus">共 <span id="paraCount">0</span> 个段落</span>
+    <div class="bottom-actions">
+        <button class="btn btn-secondary" id="btnReAnalyze">🔄 重新分析</button>
+        <button class="btn btn-primary" id="btnConfirm">✅ 一键确认</button>
+    </div>
+</div>
+
+<!-- ============================================================
+     Toast 提示
+     ============================================================ -->
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================
+      脚本
+      ============================================================ -->
+<script src="{{ url_for('static', filename='review.js') }}"></script>
+</body>
+</html>

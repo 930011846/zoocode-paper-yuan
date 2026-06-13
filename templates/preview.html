@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>排版预览 - 论文格式自动排版</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='preview.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-title">📋 排版预览</span>
+</nav>
+
+<div class="comparison-container">
+  <div class="column column-left">
+    <div class="column-title">📄 原始论文</div>
+    <div id="leftContent"></div>
+  </div>
+  <div class="column-divider"></div>
+  <div class="column column-right">
+    <div class="column-title">✨ 排版后效果</div>
+    <div id="rightContent"></div>
+  </div>
+</div>
+
+<!-- 合规检查折叠面板 -->
+<div class="compliance-panel">
+  <div class="compliance-header" onclick="toggleCompliance()">
+    <span><span id="compliance-icon">▶</span> 📋 格式合规检查报告</span>
+    <span id="compliance-summary" style="float:right;font-size:13px;color:#888;"></span>
+  </div>
+  <div class="compliance-body" id="compliance-body" style="display:none">
+    <div id="compliance-errors"></div>
+    <div id="compliance-warnings"></div>
+    <div id="compliance-passed"></div>
+  </div>
+</div>
+
+<!-- 底部操作栏 -->
+<div class="bottom-bar">
+  <span id="bottomStatus">共 0 处格式修改</span>
+  <div>
+    <a href="/review" class="btn-secondary">🔄 返回修改</a>
+    <a href="/download" class="btn-primary">📥 下载修改后论文</a>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='preview.js') }}"></script>
+</body>
+</html>

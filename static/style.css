@@ -1,0 +1,505 @@
+/* ===== 全局重置 ===== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                 "Helvetica Neue", Arial, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #333;
+}
+
+/* ===== 卡片容器 ===== */
+.card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06),
+                0 6px 40px rgba(0, 0, 0, 0.04);
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 480px;
+    transition: box-shadow 0.3s ease;
+}
+
+/* ===== 标题 ===== */
+.title {
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    color: #1a1a1a;
+    margin-bottom: 36px;
+    letter-spacing: 0.02em;
+}
+
+/* ===== 上传区域 ===== */
+.upload-group {
+    margin-bottom: 20px;
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px dashed #d9d9d9;
+    border-radius: 14px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: #fafafa;
+}
+
+.upload-label:hover {
+    border-color: #4A90D9;
+    background: #f4f8fd;
+}
+
+.upload-label.has-file {
+    border-style: solid;
+    border-color: #4A90D9;
+    background: #f0f6ff;
+}
+
+.upload-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.upload-text {
+    font-size: 15px;
+    color: #666;
+    font-weight: 500;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+}
+
+.file-name {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #4A90D9;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+/* ===== 提交按钮 ===== */
+.btn-submit {
+    width: 100%;
+    padding: 15px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: #4A90D9;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 28px;
+    transition: all 0.25s ease;
+    letter-spacing: 0.03em;
+    outline: none;
+}
+
+.btn-submit:hover {
+    background: #3a7bc8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(74, 144, 217, 0.35);
+}
+
+.btn-submit:active {
+    transform: scale(0.97);
+}
+
+.btn-submit:disabled {
+    background: #a0c4e8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===== 消息提示 ===== */
+.message {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.message.show {
+    display: block;
+}
+
+.message.success {
+    background: #F6FFED;
+    border: 1px solid #B7EB8F;
+    color: #52C41A;
+}
+
+.message.error {
+    background: #FFF2F0;
+    border: 1px solid #FFCCC7;
+    color: #FF4D4F;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 540px) {
+    body {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: 30px;
+    }
+
+    .card {
+        padding: 30px 20px;
+        border-radius: 16px;
+    }
+
+    .title {
+        font-size: 22px;
+        margin-bottom: 28px;
+    }
+
+    .upload-label {
+        padding: 24px 16px;
+    }
+
+    .btn-submit {
+        font-size: 15px;
+        padding: 14px 20px;
+    }
+
+    /* 移动端：卡片横向排列 */
+    .type-cards {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .type-card {
+        flex: 1;
+        padding: 14px 10px;
+    }
+
+    .school-select-wrapper {
+        margin-top: 16px;
+    }
+
+    .adv-content {
+        padding: 12px 10px;
+    }
+}
+
+/* ================================================================
+   学校选择下拉框
+   ================================================================ */
+
+.school-select-wrapper {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.school-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.school-select {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    background: #f8f9fb;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.25s ease;
+    appearance: auto;
+    -webkit-appearance: auto;
+    font-family: inherit;
+}
+
+.school-select:hover {
+    border-color: #4A90D9;
+    background: #f0f6ff;
+}
+
+.school-select:focus {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+    background: #fff;
+}
+
+/* ================================================================
+   论文类型卡片
+   ================================================================ */
+
+.type-selector {
+    margin-top: 20px;
+}
+
+.type-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.type-cards {
+    display: flex;
+    gap: 12px;
+    position: relative;
+    align-items: stretch;
+}
+
+.type-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 18px 12px;
+    background: #fafafa;
+    border: 2px solid #e8e8e8;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    user-select: none;
+}
+
+.type-card:hover {
+    border-color: #b8d4f0;
+    background: #f4f8fd;
+}
+
+.type-card.selected {
+    border-color: #4A90D9;
+    background: #f0f6ff;
+    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.15);
+}
+
+.type-card-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.type-card-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.type-card.selected .type-card-text {
+    color: #4A90D9;
+}
+
+/* 预判标签 */
+.prediction-badge {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #b8860b;
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 20px;
+    white-space: nowrap;
+    position: absolute;
+    right: 0;
+    top: -28px;
+}
+
+/* ================================================================
+   高级设置面板
+   ================================================================ */
+
+.adv-settings {
+    margin-top: 20px;
+}
+
+.adv-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    background: #f8f9fb;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+    outline: none;
+}
+
+.adv-toggle:hover {
+    border-color: #4A90D9;
+    background: #f0f6ff;
+    color: #4A90D9;
+}
+
+#advArrow {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+/* 折叠内容 */
+.adv-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease;
+    padding: 0 4px;
+    opacity: 0;
+}
+
+.adv-content.open {
+    max-height: 300px;
+    padding: 16px 4px 4px;
+    opacity: 1;
+}
+
+.adv-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+
+.adv-row:last-child {
+    margin-bottom: 0;
+}
+
+.adv-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    flex-shrink: 0;
+    min-width: 120px;
+}
+
+.adv-input-number {
+    width: 80px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    text-align: center;
+}
+
+.adv-input-number:focus {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+}
+
+.adv-range-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 200px;
+}
+
+.adv-range {
+    flex: 1;
+    height: 6px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: #e8e8e8;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.adv-range::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #4A90D9;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.15s ease;
+}
+
+.adv-range::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.adv-range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #4A90D9;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.adv-range-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4A90D9;
+    min-width: 40px;
+    text-align: right;
+}
+
+.adv-select {
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    min-width: 130px;
+}
+
+.adv-select:focus {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+}

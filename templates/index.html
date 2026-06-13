@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论文格式自动排版</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+/* ===== 分析区域专用样式 ===== */
+
+.analyzer-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+}
+
+.section-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* 分析按钮行 */
+.analyzer-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.analyzer-row .upload-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.btn-analyze {
+    flex-shrink: 0;
+    padding: 14px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: #7B61FF;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.02em;
+    outline: none;
+    white-space: nowrap;
+    margin-top: 0;
+    height: fit-content;
+}
+
+.btn-analyze:hover:not(:disabled) {
+    background: #6a52e0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(123, 97, 255, 0.35);
+}
+
+.btn-analyze:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.btn-analyze:disabled {
+    background: #b8a9f0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 分析结果容器 */
+.analysis-result {
+    display: none;
+    margin-top: 24px;
+}
+
+.analysis-result.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+.analysis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 14px 18px;
+    background: #f8f6ff;
+    border-radius: 12px;
+    border: 1px solid #e8e0ff;
+}
+
+.analysis-header-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4A3A8A;
+}
+
+.analysis-header-title small {
+    font-weight: 400;
+    font-size: 13px;
+    color: #888;
+    margin-left: 8px;
+}
+
+.btn-close-result {
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-close-result:hover {
+    color: #555;
+    border-color: #bbb;
+    background: #f5f5f5;
+}
+
+/* 单个规则卡片 */
+.rule-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.rule-card:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.rule-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+}
+
+.rule-card-header .rule-icon {
+    font-size: 18px;
+}
+
+.rule-card-body {
+    padding: 16px 18px;
+}
+
+.rule-card-body table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rule-card-body td {
+    padding: 6px 0;
+    font-size: 14px;
+    vertical-align: top;
+}
+
+.rule-card-body td.label {
+    width: 90px;
+    color: #999;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.rule-card-body td.value {
+    color: #333;
+}
+
+.rule-card-body .attr-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+}
+
+.rule-card-body .attr-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rule-card-body .attr-key {
+    color: #999;
+    font-size: 13px;
+}
+
+.rule-card-body .attr-val {
+    color: #333;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+/* 推断标签 */
+.inferred-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b8860b;
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 20px;
+    margin-left: auto;
+}
+
+/* 默认设置区域 */
+.default-settings {
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.default-settings-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.default-settings .attr-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+}
+
+.default-settings .attr-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.default-settings .attr-key {
+    color: #999;
+}
+
+.default-settings .attr-val {
+    color: #333;
+    font-weight: 500;
+}
+
+/* 分析错误 */
+.analysis-error {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: #FFF2F0;
+    border: 1px solid #FFCCC7;
+    border-radius: 12px;
+    color: #FF4D4F;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.analysis-error.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 国家标准复选框 */
+.national-standard-option {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.ns-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 10px 20px;
+    background: #f8f9fb;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.ns-label:hover {
+    border-color: #4A90D9;
+    background: #f0f6ff;
+}
+
+.ns-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #4A90D9;
+}
+
+.ns-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+/* 移动端适配 */
+@media (max-width: 540px) {
+    .analyzer-row {
+        flex-direction: column;
+    }
+
+    .btn-analyze {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h1 class="title">论文格式自动排版</h1>
+
+    <!-- ====== 原有：模板上传 ====== -->
+    <div class="upload-group">
+        <label class="upload-label" id="templateLabel" for="templateInput">
+            <span class="upload-icon">&#x1F4C4;</span>
+            <span class="upload-text">上传标准格式模板 (.docx)</span>
+            <span class="upload-hint">点击选择文件</span>
+            <div class="file-name" id="templateFileName"></div>
+        </label>
+        <input type="file" id="templateInput" name="template" accept=".docx">
+    </div>
+
+    <!-- ====== 原有：论文上传 ====== -->
+    <div class="upload-group">
+        <label class="upload-label" id="paperLabel" for="paperInput">
+            <span class="upload-icon">&#x1F4DD;</span>
+            <span class="upload-text">上传你的论文 (.docx)</span>
+            <span class="upload-hint">点击选择文件</span>
+            <div class="file-name" id="paperFileName"></div>
+        </label>
+        <input type="file" id="paperInput" name="paper" accept=".docx">
+    </div>
+
+    <!-- 国家标准复选框 -->
+    <div class="national-standard-option">
+        <label class="ns-label" id="nsLabel">
+            <input type="checkbox" id="nsCheckbox">
+            <span class="ns-checkmark"></span>
+            <span class="ns-text">&#x1F4DC; 使用国家标准学位论文格式 (GB/T 7713.1)</span>
+        </label>
+    </div>
+
+    <!-- ====== 学校选择下拉框 ====== -->
+    <div class="school-select-wrapper">
+        <label class="school-label" for="schoolSelect">🏫 选择学校</label>
+        <select id="schoolSelect" class="school-select">
+            <option value="default">📜 国标默认 (GB/T 7713.1)</option>
+            <option value="pku">🏛️ 北京大学</option>
+            <option value="thu">🏛️ 清华大学</option>
+            <option value="zunyi">🏥 遵义医科大学</option>
+            <option value="custom">📁 自定义（上传模板）</option>
+        </select>
+        <div class="school-hint" id="schoolHint">将使用所选学校的官方格式规范</div>
+    </div>
+
+    <!-- ====== 论文类型卡片 ====== -->
+    <div class="type-selector">
+        <div class="type-label">📄 论文类型</div>
+        <div class="type-cards" id="typeCards">
+            <label class="type-card" data-value="research">
+                <input type="radio" name="paper_type" value="research" checked hidden>
+                <span class="type-card-icon">🔬</span>
+                <span class="type-card-text">研究性论文</span>
+            </label>
+            <label class="type-card" data-value="review">
+                <input type="radio" name="paper_type" value="review" hidden>
+                <span class="type-card-icon">📚</span>
+                <span class="type-card-text">综述性论文</span>
+            </label>
+            <div class="prediction-badge" id="predictionBadge" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ====== 高级设置面板 ====== -->
+    <div class="adv-settings">
+        <button class="adv-toggle" id="advToggle">⚙️ 高级设置 <span id="advArrow">▼</span></button>
+        <div class="adv-content" id="advContent">
+            <div class="adv-row">
+                <label class="adv-label" for="refCountThreshold">文献数量阈值</label>
+                <input type="number" id="refCountThreshold" class="adv-input-number" value="20" min="1">
+            </div>
+            <div class="adv-row">
+                <label class="adv-label" for="recentRefRatio">近5年文献占比</label>
+                <div class="adv-range-group">
+                    <input type="range" id="recentRefRatio" class="adv-range" min="0" max="100" value="50">
+                    <span class="adv-range-value" id="recentRefRatioValue">50%</span>
+                </div>
+            </div>
+            <div class="adv-row">
+                <label class="adv-label" for="figNumbering">图表编号方式</label>
+                <select id="figNumbering" class="adv-select">
+                    <option value="section">章节编号</option>
+                    <option value="continuous">全文连续</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 原有：排版按钮 ====== -->
+    <button class="btn-submit" id="btnSubmit">&#x2728; 开始排版</button>
+
+    <!-- ====== 原有：消息提示区域 ====== -->
+    <div class="message" id="message"></div>
+
+    <!-- ================================================================== -->
+    <!-- ====== 新增：分析模板格式区域 ====== -->
+    <!-- ================================================================== -->
+    <div class="analyzer-section">
+
+        <div class="section-label">&#x1F9EC; 模板格式分析</div>
+
+        <!-- 分析模板的上传行 -->
+        <div class="analyzer-row">
+            <div class="upload-group">
+                <label class="upload-label" id="analyzeLabel" for="analyzeInput">
+                    <span class="upload-icon">&#x1F4C4;</span>
+                    <span class="upload-text">仅上传标准格式模板 (.docx)</span>
+                    <span class="upload-hint">点击选择文件</span>
+                    <div class="file-name" id="analyzeFileName"></div>
+                </label>
+                <input type="file" id="analyzeInput" name="template" accept=".docx">
+            </div>
+            <button class="btn-analyze" id="btnAnalyze">&#x1F50C; 分析模板格式</button>
+        </div>
+
+        <!-- 分析错误提示 -->
+        <div class="analysis-error" id="analysisError"></div>
+
+        <!-- 分析结果展示 -->
+        <div class="analysis-result" id="analysisResult">
+            <div class="analysis-header">
+                <span class="analysis-header-title">
+                    &#x1F4CB; 格式规范表
+                    <small id="ruleCount"></small>
+                </span>
+                <button class="btn-close-result" id="btnCloseResult">&#x2716; 关闭</button>
+            </div>
+            <div id="ruleCardsContainer"></div>
+        </div>
+
+    </div>
+    <!-- ====== 结束：分析模板格式区域 ====== -->
+
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // ================================================================
+    //  原有功能：排版上传
+    // ================================================================
+
+    var templateInput = document.getElementById('templateInput');
+    var paperInput = document.getElementById('paperInput');
+    var templateLabel = document.getElementById('templateLabel');
+    var paperLabel = document.getElementById('paperLabel');
+    var templateFileName = document.getElementById('templateFileName');
+    var paperFileName = document.getElementById('paperFileName');
+    var btnSubmit = document.getElementById('btnSubmit');
+    var message = document.getElementById('message');
+
+    var templateFile = null;
+    var paperFile = null;
+
+    function updateUploadUI(label, nameEl, file) {
+        if (file) {
+            label.classList.add('has-file');
+            nameEl.textContent = file.name;
+        } else {
+            label.classList.remove('has-file');
+            nameEl.textContent = '';
+        }
+    }
+
+    function showMessage(text, type) {
+        message.innerHTML = '';
+        message.textContent = text;
+        message.className = 'message show ' + type;
+    }
+
+    // 显示含 HTML 的消息（用于显示"查看论文结构"链接）
+    function showMessageHtml(html, type) {
+        message.innerHTML = html;
+        message.className = 'message show ' + type;
+    }
+
+    function hideMessage() {
+        message.className = 'message';
+    }
+
+    templateInput.addEventListener('change', function (e) {
+        templateFile = e.target.files[0] || null;
+        updateUploadUI(templateLabel, templateFileName, templateFile);
+        hideMessage();
+    });
+
+    paperInput.addEventListener('change', function (e) {
+        paperFile = e.target.files[0] || null;
+        updateUploadUI(paperLabel, paperFileName, paperFile);
+        hideMessage();
+        if (paperFile) {
+            predictPaperType(paperFile);
+        } else {
+            hidePredictionBadge();
+        }
+    });
+
+    // ================================================================
+    //  学校选择
+    // ================================================================
+
+    var schoolSelect = document.getElementById('schoolSelect');
+
+    // 页面加载时获取学校列表
+    fetchSchools();
+
+    function fetchSchools() {
+        fetch('/get-schools')
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.success && res.data) {
+                    schoolSelect.innerHTML = '';
+                    res.data.forEach(function (s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.key;
+                        opt.textContent = s.name;
+                        schoolSelect.appendChild(opt);
+                    });
+                }
+            })
+            .catch(function () {
+                schoolSelect.innerHTML = '<option value="default">国标默认</option>';
+            });
+    }
+
+    // 学校切换：重置国家标准复选框，控制其显示
+    schoolSelect.addEventListener('change', function () {
+        // 重置国家标准复选框
+        if (nsCheckbox) {
+            nsCheckbox.checked = false;
+            // 触发 change 事件以恢复模板上传域
+            var evt = document.createEvent('HTMLEvents');
+            evt.initEvent('change', false, true);
+            nsCheckbox.dispatchEvent(evt);
+        }
+        // 非 default 学校时隐藏国家标准选项
+        updateNsVisibility();
+    });
+
+    function updateNsVisibility() {
+        var nsOption = document.querySelector('.national-standard-option');
+        if (!nsOption) return;
+        if (schoolSelect && schoolSelect.value !== 'default') {
+            nsOption.style.display = 'none';
+        } else {
+            nsOption.style.display = '';
+        }
+    }
+
+    // ================================================================
+    //  论文类型卡片 & 自动预判
+    // ================================================================
+
+    var typeCards = document.querySelectorAll('.type-card');
+    var predictionBadge = document.getElementById('predictionBadge');
+
+    // 点击卡片切换选中状态
+    typeCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+            typeCards.forEach(function (c) { c.classList.remove('selected'); });
+            card.classList.add('selected');
+            var radio = card.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    // 自动预判论文类型
+    function predictPaperType(file) {
+        var formData = new FormData();
+        formData.append('paper', file);
+
+        predictionBadge.textContent = '⏳ 识别中...';
+        predictionBadge.style.display = 'inline-flex';
+
+        fetch('/predict-paper-type', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success && res.data) {
+                var ptype = res.data.type;
+                var conf = Math.round((res.data.confidence || 0) * 100);
+                var label = '';
+                if (ptype === 'research') {
+                    label = '研究性论文';
+                    selectTypeCard('research');
+                } else if (ptype === 'review') {
+                    label = '综述性论文';
+                    selectTypeCard('review');
+                } else {
+                    label = '无法确定';
+                }
+                predictionBadge.textContent = '🤖 预测: ' + label + ' (' + conf + '%)';
+                predictionBadge.style.display = 'inline-flex';
+            } else {
+                predictionBadge.textContent = '⚠️ 类型识别失败';
+                predictionBadge.style.display = 'inline-flex';
+            }
+        })
+        .catch(function () {
+            predictionBadge.textContent = '⚠️ 识别服务不可用';
+            predictionBadge.style.display = 'inline-flex';
+        });
+    }
+
+    function selectTypeCard(value) {
+        typeCards.forEach(function (c) {
+            if (c.getAttribute('data-value') === value) {
+                c.classList.add('selected');
+                var radio = c.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            } else {
+                c.classList.remove('selected');
+            }
+        });
+    }
+
+    function hidePredictionBadge() {
+        predictionBadge.style.display = 'none';
+        predictionBadge.textContent = '';
+    }
+
+    // 默认选中 research
+    selectTypeCard('research');
+
+    // ================================================================
+    //  高级设置面板
+    // ================================================================
+
+    var advToggle = document.getElementById('advToggle');
+    var advContent = document.getElementById('advContent');
+    var advArrow = document.getElementById('advArrow');
+    var recentRefRatio = document.getElementById('recentRefRatio');
+    var recentRefRatioValue = document.getElementById('recentRefRatioValue');
+
+    advToggle.addEventListener('click', function () {
+        var isOpen = advContent.classList.toggle('open');
+        advArrow.textContent = isOpen ? '▲' : '▼';
+    });
+
+    // 范围滑块实时显示值
+    if (recentRefRatio && recentRefRatioValue) {
+        recentRefRatio.addEventListener('input', function () {
+            recentRefRatioValue.textContent = recentRefRatio.value + '%';
+        });
+    }
+
+    // ================================================================
+    //  国家标准复选框逻辑
+    // ================================================================
+
+    var nsCheckbox = document.getElementById('nsCheckbox');
+    var nsLabel = document.getElementById('nsLabel');
+    var templateGroup = document.getElementById('templateGroup');
+
+    // 页面加载时同步 ns 显示状态
+    updateNsVisibility();
+
+    nsCheckbox.addEventListener('change', function () {
+        if (nsCheckbox.checked) {
+            templateGroup.style.opacity = '0.4';
+            templateGroup.style.pointerEvents = 'none';
+            templateLabel.classList.remove('has-file');
+            templateFileName.textContent = '';
+            templateFile = null;
+            templateInput.value = '';
+        } else {
+            templateGroup.style.opacity = '1';
+            templateGroup.style.pointerEvents = 'auto';
+        }
+        hideMessage();
+    });
+
+    // ================================================================
+    //  提交排版
+    // ================================================================
+
+    btnSubmit.addEventListener('click', function () {
+        var useNational = nsCheckbox && nsCheckbox.checked;
+
+        if (!paperFile) {
+            showMessage('请先上传论文文件', 'error');
+            return;
+        }
+
+        // 获取学校
+        var school = schoolSelect ? schoolSelect.value : 'default';
+
+        // 仅当 school 为 'default' 且未勾选国家标准时，才需要模板
+        var needsTemplate = (school === 'default' && !useNational);
+
+        if (needsTemplate && !templateFile) {
+            showMessage('请上传模板文件或勾选"使用国家标准"', 'error');
+            return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = '正在分析...';
+        hideMessage();
+
+        // 获取选中的论文类型
+        var selectedType = document.querySelector('input[name="paper_type"]:checked');
+        var paperType = selectedType ? selectedType.value : 'research';
+
+        // 获取高级设置
+        var refCountThreshold = document.getElementById('refCountThreshold');
+        var recentRefRatio = document.getElementById('recentRefRatio');
+        var figNumbering = document.getElementById('figNumbering');
+
+        var formData = new FormData();
+        if (templateFile) formData.append('template', templateFile);
+        formData.append('paper', paperFile);
+        formData.append('use_national_standard', useNational ? 'true' : 'false');
+        formData.append('school', school);
+        formData.append('paper_type', paperType);
+        formData.append('ref_count_threshold', refCountThreshold ? refCountThreshold.value : '20');
+        formData.append('recent_ref_ratio', recentRefRatio ? recentRefRatio.value : '50');
+        formData.append('fig_numbering', figNumbering ? figNumbering.value : 'section');
+
+        fetch('/analyze-paper', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function (response) {
+            return response.json().then(function (data) {
+                return { status: response.status, data: data };
+            });
+        })
+        .then(function (result) {
+            if (result.data.success) {
+                var method = result.data.paper_structure ? result.data.paper_structure.method : 'unknown';
+                var sections = result.data.paper_structure ? (result.data.paper_structure.sections || []).length : 0;
+                var msgHtml = '分析完成！共识别 ' + sections + ' 个章节（' + method + '）<br>' +
+                    '<a href="/review" style="display:inline-block;margin-top:12px;padding:8px 20px;' +
+                    'background:#4A90D9;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;' +
+                    'font-size:14px;">&#x1F4CB; 查看论文结构</a>';
+                showMessageHtml(msgHtml, 'success');
+            } else {
+                showMessage(result.data.message || '分析失败', 'error');
+            }
+        })
+        .catch(function (err) {
+            showMessage('网络错误：' + (err.message || '请求失败'), 'error');
+        })
+        .finally(function () {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = '\u2728 开始排版';
+        });
+    });
+
+    // ================================================================
+    //  新增功能：分析模板格式
+    // ================================================================
+
+    var analyzeInput = document.getElementById('analyzeInput');
+    var analyzeLabel = document.getElementById('analyzeLabel');
+    var analyzeFileName = document.getElementById('analyzeFileName');
+    var btnAnalyze = document.getElementById('btnAnalyze');
+    var analysisResult = document.getElementById('analysisResult');
+    var analysisError = document.getElementById('analysisError');
+    var ruleCardsContainer = document.getElementById('ruleCardsContainer');
+    var btnCloseResult = document.getElementById('btnCloseResult');
+    var ruleCount = document.getElementById('ruleCount');
+
+    var analyzeFile = null;
+
+    // 分析区域的文件选择
+    analyzeInput.addEventListener('change', function (e) {
+        analyzeFile = e.target.files[0] || null;
+        updateUploadUI(analyzeLabel, analyzeFileName, analyzeFile);
+        hideAnalysisError();
+    });
+
+    // 点击"分析模板格式"按钮
+    btnAnalyze.addEventListener('click', function () {
+        if (!analyzeFile) {
+            showAnalysisError('请先上传模板文件');
+            return;
+        }
+
+        btnAnalyze.disabled = true;
+        btnAnalyze.textContent = '分析中...';
+        hideAnalysisError();
+        hideAnalysisResult();
+
+        var formData = new FormData();
+        formData.append('template', analyzeFile);
+
+        fetch('/analyze-template', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function (response) {
+            return response.json().then(function (data) {
+                return { status: response.status, data: data };
+            });
+        })
+        .then(function (result) {
+            if (result.data.success && result.data.data) {
+                renderAnalysisResult(result.data.data);
+            } else {
+                showAnalysisError(result.data.message || '模板分析失败');
+            }
+        })
+        .catch(function (err) {
+            showAnalysisError('网络错误：' + (err.message || '请求失败'));
+        })
+        .finally(function () {
+            btnAnalyze.disabled = false;
+            btnAnalyze.textContent = '\u{1F50C} 分析模板格式';
+        });
+    });
+
+    // 关闭结果
+    btnCloseResult.addEventListener('click', function () {
+        hideAnalysisResult();
+    });
+
+    // ---------- 辅助函数 ----------
+
+    function showAnalysisError(msg) {
+        analysisError.textContent = msg;
+        analysisError.classList.add('active');
+    }
+
+    function hideAnalysisError() {
+        analysisError.classList.remove('active');
+        analysisError.textContent = '';
+    }
+
+    function hideAnalysisResult() {
+        analysisResult.classList.remove('active');
+    }
+
+    function renderAnalysisResult(data) {
+        var rules = data.style_rules || {};
+        var ruleEntries = Object.entries(rules);
+        var count = ruleEntries.length;
+
+        ruleCount.textContent = '共 ' + count + ' 项规则';
+
+        ruleCardsContainer.innerHTML = '';
+
+        ruleEntries.forEach(function (entry) {
+            var name = entry[0];
+            var rule = entry[1];
+            var card = document.createElement('div');
+            card.className = 'rule-card';
+
+            var header = document.createElement('div');
+            header.className = 'rule-card-header';
+
+            var iconSpan = document.createElement('span');
+            iconSpan.className = 'rule-icon';
+            iconSpan.textContent = '\u{1F4D6}';
+            header.appendChild(iconSpan);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+            header.appendChild(nameSpan);
+
+            if (rule.inferred) {
+                var badge = document.createElement('span');
+                badge.className = 'inferred-badge';
+                badge.textContent = '\u{1F916} 推断';
+                header.appendChild(badge);
+            }
+
+            card.appendChild(header);
+
+            var body = document.createElement('div');
+            body.className = 'rule-card-body';
+
+            var html = '';
+
+            if (rule.description) {
+                html += '<div style="margin-bottom:12px;font-size:13px;color:#888;">' +
+                        escapeHtml(rule.description) + '</div>';
+            }
+
+            html += '<table>';
+
+            html += '<tr><td class="label">中文字体</td><td class="value">';
+            html += renderFontAttrs(rule.chinese_font);
+            html += '</td></tr>';
+
+            html += '<tr><td class="label">西文字体</td><td class="value">';
+            html += renderFontAttrs(rule.western_font);
+            html += '</td></tr>';
+
+            html += '<tr><td class="label">段落格式</td><td class="value">';
+            html += renderParagraphAttrs(rule.paragraph);
+            html += '</td></tr>';
+
+            html += '</table>';
+
+            body.innerHTML = html;
+            card.appendChild(body);
+
+            ruleCardsContainer.appendChild(card);
+        });
+
+        if (data.default_chinese_font || data.default_western_font || data.line_spacing) {
+            var defaultsDiv = document.createElement('div');
+            defaultsDiv.className = 'default-settings';
+
+            var defaultsHtml = '<div class="default-settings-title">\u{2699}\u{FE0F} 文档默认设置</div>';
+            defaultsHtml += '<div class="attr-list">';
+
+            if (data.default_chinese_font) {
+                var cf = data.default_chinese_font;
+                defaultsHtml += '<span class="attr-item"><span class="attr-key">默认中文字体：</span>' +
+                    '<span class="attr-val">' + escapeHtml(cf.name || '') + ' ' + escapeHtml(cf.size || '') + '</span></span>';
+            }
+            if (data.default_western_font) {
+                var wf = data.default_western_font;
+                defaultsHtml += '<span class="attr-item"><span class="attr-key">默认西文字体：</span>' +
+                    '<span class="attr-val">' + escapeHtml(wf.name || '') + ' ' + escapeHtml(wf.size || '') + '</span></span>';
+            }
+            if (data.line_spacing) {
+                defaultsHtml += '<span class="attr-item"><span class="attr-key">行距：</span>' +
+                    '<span class="attr-val">' + escapeHtml(data.line_spacing) + '</span></span>';
+            }
+            if (data.page_margins) {
+                var pm = data.page_margins;
+                defaultsHtml += '<span class="attr-item"><span class="attr-key">页边距：</span>' +
+                    '<span class="attr-val">上 ' + escapeHtml(pm.top || '') +
+                    ' 下 ' + escapeHtml(pm.bottom || '') +
+                    ' 左 ' + escapeHtml(pm.left || '') +
+                    ' 右 ' + escapeHtml(pm.right || '') + '</span></span>';
+            }
+
+            defaultsHtml += '</div>';
+            defaultsDiv.innerHTML = defaultsHtml;
+            ruleCardsContainer.appendChild(defaultsDiv);
+        }
+
+        analysisResult.classList.add('active');
+    }
+
+    function renderFontAttrs(font) {
+        if (!font) return '<span style="color:#ccc">-</span>';
+        var parts = [];
+        if (font.name) {
+            parts.push('<span class="attr-item"><span class="attr-key">字体：</span><span class="attr-val">' +
+                escapeHtml(font.name) + '</span></span>');
+        }
+        if (font.size) {
+            parts.push('<span class="attr-item"><span class="attr-key">字号：</span><span class="attr-val">' +
+                escapeHtml(font.size) + '</span></span>');
+        }
+        if (font.bold !== undefined && font.bold !== null) {
+            parts.push('<span class="attr-item"><span class="attr-key">加粗：</span><span class="attr-val">' +
+                (font.bold ? '\u2705 是' : '\u274C 否') + '</span></span>');
+        }
+        if (font.italic !== undefined && font.italic !== null) {
+            parts.push('<span class="attr-item"><span class="attr-key">斜体：</span><span class="attr-val">' +
+                (font.italic ? '\u2705 是' : '\u274C 否') + '</span></span>');
+        }
+        return '<div class="attr-list">' + parts.join('') + '</div>';
+    }
+
+    function renderParagraphAttrs(para) {
+        if (!para) return '<span style="color:#ccc">-</span>';
+        var parts = [];
+        if (para.alignment) {
+            parts.push('<span class="attr-item"><span class="attr-key">对齐：</span><span class="attr-val">' +
+                escapeHtml(para.alignment) + '</span></span>');
+        }
+        if (para.first_line_indent) {
+            parts.push('<span class="attr-item"><span class="attr-key">缩进：</span><span class="attr-val">' +
+                escapeHtml(para.first_line_indent) + '</span></span>');
+        }
+        if (para.space_before) {
+            parts.push('<span class="attr-item"><span class="attr-key">段前：</span><span class="attr-val">' +
+                escapeHtml(para.space_before) + '</span></span>');
+        }
+        if (para.space_after) {
+            parts.push('<span class="attr-item"><span class="attr-key">段后：</span><span class="attr-val">' +
+                escapeHtml(para.space_after) + '</span></span>');
+        }
+        if (para.line_spacing) {
+            parts.push('<span class="attr-item"><span class="attr-key">行距：</span><span class="attr-val">' +
+                escapeHtml(para.line_spacing) + '</span></span>');
+        }
+        if (parts.length === 0) {
+            return '<span style="color:#ccc">-</span>';
+        }
+        return '<div class="attr-list">' + parts.join('') + '</div>';
+    }
+
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return String(str);
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+})();
+</script>
+
+</body>
+</html>
